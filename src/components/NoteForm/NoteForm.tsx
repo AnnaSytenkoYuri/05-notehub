@@ -2,9 +2,12 @@ import { ErrorMessage, Field, Form, Formik, type FormikHelpers } from "formik";
 import css from "./NoteForm.module.css";
 import { useId } from "react";
 import * as Yup from "yup";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { createNote } from "../../services/noteService";
-import { queryClient } from "../../main";
+
+interface NoteFormProps {
+  onCancel : () => void;
+}
 
 interface NoteFormValues {
   title: string;
@@ -29,7 +32,8 @@ const NoteFormSchema = Yup.object().shape({
     .required("Tag is required"),
 });
 
-export default function NoteForm({ onCancel }: { onCancel: () => void }) {
+export default function NoteForm({ onCancel }: NoteFormProps) {
+  const queryClient = useQueryClient();
   const fieldId = useId();
   const mutation = useMutation({
     mutationFn: createNote,
