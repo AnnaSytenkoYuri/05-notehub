@@ -7,16 +7,10 @@ import SearchBox from "../SearchBox/SearchBox";
 import { useDebounce } from "use-debounce";
 import Pagination from "../Pagination/Pagination";
 import {
-  deleteNote,
   fetchNotes,
   type FetchNotesResponse,
 } from "../../services/noteService";
-import {
-  keepPreviousData,
-  useMutation,
-  useQuery,
-  useQueryClient,
-} from "@tanstack/react-query";
+import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import LoadingIndicator from "../LoadingIndicator/LoadingIndicator";
 import ErrorMessage from "../ErrorMessage/ErrorMessage";
 import EmptyState from "../EmptyState/EmptyState";
@@ -28,28 +22,16 @@ export default function App() {
   const [searchTerm, setSearchTerm] = useState("");
   const [debouncedSearchTerm] = useDebounce(searchTerm, 500);
 
-  const queryClient = useQueryClient();
-
   const { data, isLoading, isError, error } = useQuery<FetchNotesResponse>({
     queryKey: ["notes", page, perPage, debouncedSearchTerm],
     queryFn: () => fetchNotes(page, perPage, debouncedSearchTerm),
     placeholderData: keepPreviousData,
   });
 
-  const deleteMutation = useMutation({
-    mutationFn: (id: string) => deleteNote(id),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["notes"] });
-    },
-    onError: (error: Error) => {
-      alert(`Failed to delete note: ${error.message}`);
-    },
-  });
-
   const openModal = () => setIsModalOpen(true);
   const closeModal = () => setIsModalOpen(false);
 
-  const totalPages = data?.totalPages ?? 1
+  const totalPages = data?.totalPages ?? 1;
   return (
     <div className={css.app}>
       <header className={css.toolbar}>
@@ -72,17 +54,7 @@ export default function App() {
       {data && data.notes.length === 0 && (
         <EmptyState message="No notes found." />
       )}
-      {data && data.notes.length > 0 && (
-        <NoteList
-          notes={data.notes}
-          onDelete={(id) => {
-            if (window.confirm("Are you sure you want to delete this note?")) {
-              deleteMutation.mutate(id);
-            }
-          }}
-          isDeleting={deleteMutation.isPending}
-        />
-      )}
+      {data && data.notes.length > 0 && <NoteList notes={data.notes} />}
       {isModalOpen && (
         <Modal onClose={closeModal}>
           <NoteForm onCancel={closeModal} />
@@ -91,4 +63,3 @@ export default function App() {
     </div>
   );
 }
-
